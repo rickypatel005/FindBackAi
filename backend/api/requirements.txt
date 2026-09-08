@@ -1,0 +1,21 @@
+# Light requirements for Vercel Serverless deployment.
+#
+# torch, open_clip, and sentence-transformers are intentionally excluded:
+# their combined size (~855 MB) far exceeds Vercel's 250 MB function limit.
+# The backend detects their absence at runtime and falls back gracefully:
+#   - vision.py   → ENABLE_IMAGE_AI=false  → "Other" category, zero-vectors
+#   - embeddings.py → ENABLE_TEXT_AI=false → zero-vectors
+# All other features (auth, reports, matching heuristics, notifications,
+# admin, search, uploads) work identically.
+
+fastapi>=0.100
+uvicorn>=0.23
+sqlalchemy>=2.0
+pydantic>=2.0
+pydantic-settings>=2.0
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+python-multipart>=0.0.9
+Pillow>=10.0
+numpy>=1.24
+scikit-learn>=1.3
