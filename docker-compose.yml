@@ -1,0 +1,18 @@
+# Optional: spin up a local Postgres with pgvector for development without
+# a live Supabase project. Not used in production — Supabase is the target
+# per Architecture.md Section 10 (Deployment).
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: findback
+    ports:
+      - "5432:5432"
+    volumes:
+      - findback_db_data:/var/lib/postgresql/data
+
+volumes:
+  findback_db_data:

@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-09-08T08:35:36.302627+00:00",
+  "total_dataset_items": 64,
+  "total_positive_pairs": 12,
+  "total_negative_evaluations": 384,
+  "notification_threshold": 70.0,
+  "metrics": {
+    "recall_at_1": 1.0,
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "mrr": 1.0,
+    "false_positive_rate": 0.0,
+    "top1_accuracy_percent": 100.0,
+    "top3_accuracy_percent": 100.0,
+    "top5_accuracy_percent": 100.0
+  },
+  "pair_details": [
+    {
+      "lost_id": "lost_laptop_01",
+      "lost_title": "14-inch Space Gray MacBook Pro",
+      "category": "Electronics",
+      "pair_id": "pair_laptop_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 27.59,
+      "top_candidate_id": "found_laptop_01"
+    },
+    {
+      "lost_id": "lost_bag_01",
+      "lost_title": "Navy Blue Herschel Backpack",
+      "category": "Bags",
+      "pair_id": "pair_bag_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 28.32,
+      "top_candidate_id": "found_bag_01"
+    },
+    {
+      "lost_id": "lost_wallet_01",
+      "lost_title": "Brown Bifold Leather Wallet",
+      "category": "Wallets",
+      "pair_id": "pair_wallet_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 39.64,
+      "top_candidate_id": "found_wallet_01"
+    },
+    {
+      "lost_id": "lost_audio_01",
+      "lost_title": "AirPods Pro 2nd Gen in Matte Case",
+      "category": "Earbuds/Headphones",
+      "pair_id": "pair_audio_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 35.5,
+      "top_candidate_id": "found_audio_01"
+    },
+    {
+      "lost_id": "lost_watch_01",
+      "lost_title": "Silver Apple Watch Series 8",
+      "category": "Watches",
+      "pair_id": "pair_watch_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 40.03,
+      "top_candidate_id": "found_watch_01"
+    },
+    {
+      "lost_id": "lost_bottle_01",
+      "lost_title": "32oz Hydro Flask Water Bottle",
+      "category": "Bottles",
+      "pair_id": "pair_bottle_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 25.88,
+      "top_candidate_id": "found_bottle_01"
+    },
+    {
+      "lost_id": "lost_keys_01",
+      "lost_title": "Honda Car Key with Red Lanyard",
+      "category": "Keys",
+      "pair_id": "pair_keys_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 29.8,
+      "top_candidate_id": "found_keys_01"
+    },
+    {
+      "lost_id": "lost_clothing_01",
+      "lost_title": "Black Patagonia Better Sweater Fleece Jacket",
+      "category": "Clothing",
+      "pair_id": "pair_clothing_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 35.99,
+      "top_candidate_id": "found_clothing_01"
+    },
+    {
+      "lost_id": "lost_doc_01",
+      "lost_title": "Blue International Passport in Clear Cover",
+      "category": "Documents",
+      "pair_id": "pair_doc_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 42.4,
+      "top_candidate_id": "found_doc_01"
+    },
+    {
+      "lost_id": "lost_book_01",
+      "lost_title": "Algorithms 4th Edition Textbook",
+      "category": "Books",
+      "pair_id": "pair_book_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 40.52,
+      "top_candidate_id": "found_book_01"
+    },
+    {
+      "lost_id": "lost_acc_01",
+      "lost_title": "Tortoise Shell Ray-Ban Sunglasses",
+      "category": "Accessories",
+      "pair_id": "pair_acc_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 40.57,
+      "top_candidate_id": "found_acc_01"
+    },
+    {
+      "lost_id": "lost_other_01",
+      "lost_title": "Black Folding Compact Umbrella",
+      "category": "Other",
+      "pair_id": "pair_other_01",
+      "true_match_rank": 1,
+      "top_candidate_score": 39.39,
+      "top_candidate_id": "found_other_01"
+    }
+  ]
+}

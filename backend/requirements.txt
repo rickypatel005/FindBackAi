@@ -1,0 +1,31 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+sqlalchemy==2.0.35
+psycopg2-binary==2.9.9
+pgvector==0.3.4
+supabase==2.7.4
+python-jose[cryptography]==3.3.0
+passlib==1.7.4
+python-multipart==0.0.9
+pillow==10.4.0
+numpy==1.26.4
+scikit-learn==1.5.2
+
+# --- ML (Phase 3: image pipeline) ---
+# CPU wheels are sufficient for MVP/hackathon scale. `app/services/vision.py`
+# imports these lazily and degrades to a deterministic non-ML fallback if
+# they (or their weights) aren't available, so the rest of the app — and
+# the test suite — never hard-depends on a GPU or internet access at import
+# time. Install with: pip install -r requirements.txt
+open_clip_torch==2.24.0
+torch==2.4.0
+email-validator==2.2.0
+
+# --- ML (Phase 4: text pipeline) ---
+# app/services/embeddings.py imports this lazily, same graceful-fallback
+# contract as vision.py: if it isn't installed (or weights can't be
+# fetched), text embeddings fall back to a zero-vector rather than
+# blocking report creation or the test suite.
+sentence-transformers==3.0.1
