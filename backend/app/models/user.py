@@ -25,4 +25,5 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     name = Column(String, nullable=True)
     role = Column(Enum(RoleEnum), nullable=False, default=RoleEnum.USER)
+    password_hash = Column(String, nullable=True)  # Used in AUTH_MODE=local
     created_at = Column(DateTime(timezone=True), server_default=func.now())

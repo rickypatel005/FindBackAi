@@ -65,3 +65,17 @@ Thumbs.db
 
 # ─── Docker ──────────────────────────────────────────────────────────────────
 docker-compose.override.yml
+
+# ─── Documents, Presentations & Reports ───────────────────────────────────────
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+pdf_images/
+template_media/
+report_assets/
+build_*.py
+generate_*.py
+final_pdf_text.txt
+
