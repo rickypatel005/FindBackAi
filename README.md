@@ -5,9 +5,6 @@ photos and metadata; the backend generates image + text embeddings,
 retrieves likely candidates, and produces a ranked, explainable multimodal
 match score.
 
-Full specs live in [`docs/`](./docs): PRD, SRS, Architecture, UI/UX, and the
-Development Plan this build follows phase-by-phase.
-
 **Status: Phase 0 (Project Setup) + Phase 1 (Auth & Data Model) + Phase 2
 (Frontend Core) + Phase 3 (Image Pipeline) + Phase 4 (Text Pipeline) +
 Phase 5 (Search & Matching) + Phase 6 (Explainability & Notifications) +
@@ -15,17 +12,12 @@ Phase 7 (Search & Admin) — complete.** The full Lost/Found → Match →
 Notification loop is click-through-able end-to-end in the browser today.
 Uploaded photos get real CLIP category/color suggestions and image
 embeddings, report text gets real Sentence-Transformers embeddings,
-candidate retrieval narrows via a real pgvector cosine-distance query
-(FR-07.2) before the full weighted score (image + text + category + color
-+ location + time) is computed and ranked, and a match that crosses the
-notification threshold now notifies both owners exactly once — re-checking
-or editing a report no longer creates duplicate match rows or repeat
-notifications. As of Phase 7, users can also manually search/browse active
-reports as a fallback to automatic matching, and admins get a
-duplicate-review queue plus a full "resolve match" action alongside the
-existing moderation tools.
-See [Project Status](#project-status) below for what's implemented vs. what
-Phase 8+ still needs to build.
+candidate retrieval narrows via cosine-distance queries before the full
+weighted score (image + text + category + color + location + time) is computed
+and ranked, and a match that crosses the notification threshold notifies both
+owners exactly once. Users can also manually search/browse active reports as a
+fallback to automatic matching, and admins get a duplicate-review queue plus
+a full "resolve match" action alongside the existing moderation tools.
 
 ## Stack
 
@@ -33,46 +25,37 @@ Phase 8+ still needs to build.
 |---|---|
 | Frontend | Next.js 14 (App Router) + TypeScript + Tailwind CSS |
 | Backend | FastAPI (Python) + SQLAlchemy + Pydantic |
-| Database | PostgreSQL + pgvector |
-| Auth / Storage | Supabase |
-| Image AI (Phase 3 ✅) | Pretrained CLIP / OpenCLIP |
-| Text AI (Phase 4 ✅) | Sentence Transformers |
+| Database | SQLite (offline local dev default) / PostgreSQL + pgvector |
+| Auth / Storage | Local JWT + Local Storage (default) / Supabase |
+| Image AI | Pretrained CLIP (ViT-B/32) |
+| Text AI | Sentence Transformers (all-MiniLM-L6-v2) |
 
 ## Project Structure
 
 ```
 findback-ai/
-├── docs/                  Product/spec documents (PRD, SRS, Architecture, UI/UX, Dev Plan)
 ├── backend/               FastAPI application
 │   ├── app/
-│   │   ├── core/          Settings, JWT auth, Supabase client factory
+│   │   ├── core/          Settings, JWT auth, security, Supabase client factory
 │   │   ├── models/        SQLAlchemy models (Users, Reports, Matches, Notifications)
 │   │   ├── schemas/       Pydantic request/response schemas
 │   │   ├── services/      Business logic: reports lifecycle, matching engine,
-│   │   │                  Supabase Auth path, vision (CLIP), storage (upload persistence)
+│   │   │                  vision (CLIP), storage, notifications, search, duplicates
 │   │   ├── api/routes/    auth, reports, uploads, ai, matches, notifications, admin
-│   │   └── main.py        App entrypoint (also serves local-fallback uploaded images at `/media`)
-│   ├── migrations/
-│   │   ├── 001_init.sql              Full Postgres/Supabase schema (pgvector, indexes, RLS)
-│   │   ├── 002_auth_trigger.sql      Auto-creates a profile row when Supabase Auth signs someone up
-│   │   ├── 003_vector_indexes.sql    Optional IVFFlat ANN indexes (Phase 5)
-│   │   └── 004_match_constraints.sql Unique (lost, found) constraint + updated_at (Phase 6)
-│   ├── scripts/
-│   │   ├── dev.sh                     Local bootstrap + run script
-│   │   └── create_storage_bucket.py   One-time private Storage bucket setup
-│   ├── tests/             Pytest suite: health, full auth flow, role enforcement,
-│   │                      image upload validation, vision/embeddings services, AI routes,
-│   │                      matching + notification dedup logic (75 tests)
+│   │   └── main.py        App entrypoint (also serves local uploaded images at `/media`)
+│   ├── migrations/        Postgres/Supabase schema definitions & vector indexes
+│   ├── scripts/           Dev bootstrap, demo walkthrough, storage bucket setup
+│   ├── tests/             Pytest suite (auth, role enforcement, uploads, matching, AI)
 │   └── requirements.txt
 ├── frontend/              Next.js application
 │   ├── src/app/           Landing, Login/Register, Dashboard, Report Lost/Found,
 │   │                      My Items (+detail), Potential Matches, Match Details,
-│   │                      Notifications, Admin
+│   │                      Notifications, Admin, Search
 │   ├── src/components/    Nav, ReportForm, ImageDropzone, ReportCard, StatusBadge,
 │   │                      ScoreBar/ScoreChip, EmptyState, Button
 │   ├── src/lib/           Typed API client, auth token helper, useRequireAuth guard
 │   └── scripts/dev.sh     Local bootstrap + run script
-├── ml/                    Reserved for CLIP / Sentence-Transformers wrapper scripts (Phase 3/4)
+├── ml/                    Evaluation scripts and model validation metrics
 ├── .env.example           Annotated environment variable reference
 ├── Makefile               `make backend` / `make frontend` / `make backend-test`
 └── docker-compose.yml     Optional local Postgres+pgvector for dev without Supabase
@@ -80,97 +63,94 @@ findback-ai/
 
 ## Quick Start
 
-### 1. Environment variables
+### 1. Environment Variables
 
 ```bash
-cp .env.example .env          # fill in real Supabase values when you have them
+cp .env.example .env
 cp backend/.env.example backend/.env
 ```
 
-For local development without a live Supabase project yet, `docker-compose.yml`
-spins up a local Postgres with pgvector so the backend has somewhere to write to.
+By default, the backend runs in **offline local mode** using SQLite (`DATABASE_URL=sqlite:///./findback.db`) and local JWT authentication (`AUTH_MODE=local`). No Supabase or Docker setup is required to run and test all features immediately.
 
-### 2. Database & Auth
-
-Two supported paths — pick one:
-
-**A. Local dev, no Supabase account needed (fastest to get running):**
-```bash
-docker compose up -d db
-psql postgresql://postgres:postgres@localhost:5432/findback -f backend/migrations/001_init.sql
-```
-Leave `AUTH_MODE=local` in `backend/.env`. The backend issues and verifies
-its own JWTs; register/login work immediately with no external service.
-
-**B. Real Supabase project (recommended before Phase 2+):**
-1. Create a project at [supabase.com](https://supabase.com).
-2. SQL Editor → run `backend/migrations/001_init.sql`, then
-   `backend/migrations/002_auth_trigger.sql` (this second one auto-creates
-   a `public.users` profile row every time someone signs up via Supabase
-   Auth — the app never has to do that itself).
-3. Copy these into `.env` / `backend/.env`:
-   - `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-     `SUPABASE_SERVICE_ROLE_KEY` — from Project Settings → API
-   - `SUPABASE_JWT_SECRET` — from Project Settings → API → **JWT Settings**
-     (this is a different value from the anon/service keys)
-   - `DATABASE_URL` — from Project Settings → Database → Connection string
-4. Set `AUTH_MODE=supabase`.
-5. Create the private image-storage bucket once:
-   ```bash
-   cd backend && python -m scripts.create_storage_bucket
-   ```
-6. To make a user an Admin, run this directly in the Supabase SQL editor
-   (there's deliberately no API route for it):
-   ```sql
-   update public.users set role = 'Admin' where email = 'someone@example.com';
-   ```
-
-### 3. Backend
+### 2. Running Backend (FastAPI)
 
 ```bash
-make backend
-# or manually:
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Verify it's running: `curl http://localhost:8000/health` → `{"status":"healthy"}`
+- Interactive Swagger API docs: `http://localhost:8000/docs`
+- Health check: `curl http://localhost:8000/health` → `{"status":"healthy"}`
 
-Run the test suite:
+Run backend test suite:
 ```bash
 make backend-test
+# or
+cd backend && pytest
 ```
 
-### 4. Frontend
+### 3. Running Frontend (Next.js)
+
+In a separate terminal window:
 
 ```bash
-make frontend
-# or manually:
 cd frontend
 npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000`. The landing page, register, login, and a
-placeholder dashboard (proving the auth loop end-to-end) are wired to the
-FastAPI backend at `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000/api`).
+Visit `http://localhost:3000`. The frontend will connect to `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000/api`).
+
+---
+
+### 4. Running for Multi-Device Demonstration (Same Wi-Fi)
+
+To demonstrate the application across two devices (e.g., Mac and Phone):
+
+1. **Find your local IP:**
+   ```bash
+   ipconfig getifaddr en0
+   ```
+   *(e.g., `10.84.42.16`)*
+
+2. **Configure Frontend API URL in `frontend/.env.local`:**
+   ```ini
+   NEXT_PUBLIC_API_URL=http://<YOUR_IP>:8000/api
+   ```
+
+3. **Start both servers bound to `0.0.0.0`:**
+   - **Backend:** `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+   - **Frontend:** `npm run dev` (configured to listen on `0.0.0.0:3000`)
+
+4. **Open on your other device:**
+   Navigate to `http://<YOUR_IP>:3000` from any browser on the same Wi-Fi.
+
+---
+
+### 5. Optional: Supabase & Postgres Setup
+
+For production deployment or cloud storage:
+1. Create a project on [supabase.com](https://supabase.com).
+2. In the Supabase SQL editor, run `backend/migrations/001_init.sql` and `backend/migrations/002_auth_trigger.sql`.
+3. Set `AUTH_MODE=supabase` and configure `DATABASE_URL`, `SUPABASE_URL`, and keys in `backend/.env`.
+4. Initialize the private storage bucket:
+   ```bash
+   cd backend && python -m scripts.create_storage_bucket
+   ```
 
 ## Project Status
 
 ### Phase 0 — Project Setup ✅
-- [x] Monorepo structure (`frontend/`, `backend/`, `ml/`, `docs/`)
+- [x] Monorepo structure (`frontend/`, `backend/`, `ml/`)
 - [x] Next.js frontend initialized (TypeScript + Tailwind, builds cleanly)
 - [x] FastAPI backend initialized (runs, tests pass)
 - [x] Environment variables documented (`.env.example`)
 - [x] Local dev scripts (`Makefile`, `backend/scripts/dev.sh`, `frontend/scripts/dev.sh`)
 - [x] `docker-compose.yml` for local Postgres+pgvector
 - [x] README + setup instructions (this file)
-- [ ] Connect a **real** Supabase project — this requires your own Supabase
-      account; everything (schema, auth trigger, storage bucket script,
-      `AUTH_MODE=supabase` wiring) is ready to point at one the moment it
-      exists — see step 2B under Quick Start.
+- [ ] Connect a **real** Supabase project (optional cloud setup)
 
 ### Phase 1 — Authentication & Database ✅
 - [x] `users`, `reports`, `matches`, `notifications` tables + `pgvector` extension (`migrations/001_init.sql`)
